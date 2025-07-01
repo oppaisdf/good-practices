@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using MyShop.Application.Users.Queries;
 using MyShop.Application;
+using MyShop.API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services
@@ -19,6 +20,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 
 app.MapGet("/users", async ([FromServices] IMediator m) =>
