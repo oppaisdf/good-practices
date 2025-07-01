@@ -15,6 +15,8 @@ public static class DependencyInjection
                ?? throw new InvalidOperationException("[+] Missing connection string.");
         services.AddDbContext<Context>(o => o.UseMySql(conn, ServerVersion.AutoDetect(conn)));
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+
         return services;
     }
 }

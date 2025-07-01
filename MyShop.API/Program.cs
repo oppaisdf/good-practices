@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using MyShop.Application.Users.Queries;
 using MyShop.Application;
 using MyShop.API.Middleware;
+using MyShop.Application.Users.Commands;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services
@@ -27,6 +28,18 @@ app.MapGet("/users", async ([FromServices] IMediator m) =>
         Results.Ok(await m.Send(new GetUsersQuery()))
     )
     .WithName("GetUsers")
+    .WithOpenApi();
+
+app.MapPost("/users",
+    async (
+        [FromServices] IMediator m,
+        CreateUserCommand body
+    ) =>
+    {
+        var id = await m.Send(body);
+        return Results.Created($"/users/{id}", new { id });
+    })
+    .WithName("CreateUser")
     .WithOpenApi();
 
 app.Run();

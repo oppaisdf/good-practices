@@ -15,4 +15,18 @@ public class UserRepository(
         .AsNoTracking()
         .ToListAsync(ct)
         .ConfigureAwait(false);
+
+    public async Task<bool> ExistsByEmailAsync(
+        string email,
+        CancellationToken ct = default
+    ) => await ctx.Users
+        .AnyAsync(u => u.Email == email, ct)
+        .ConfigureAwait(false);
+
+    public async Task AddAsync(
+        User user,
+        CancellationToken ct = default
+    ) => await ctx.Users
+        .AddAsync(user, ct)
+        .ConfigureAwait(false);
 }
