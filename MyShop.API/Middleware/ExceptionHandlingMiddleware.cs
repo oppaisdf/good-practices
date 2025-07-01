@@ -9,7 +9,9 @@ public class ExceptionHandlingMiddleware(
     ILogger<ExceptionHandlingMiddleware> logger
 )
 {
-    public async Task Invoke(HttpContext context)
+    public async Task Invoke(
+        HttpContext context
+    )
     {
         try
         {
@@ -17,32 +19,28 @@ public class ExceptionHandlingMiddleware(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Unhandled exception");
+            logger.LogError(ex, "[+] Unhandled exception");
             if (context.Response.HasStarted) throw;
 
             context.Response.ContentType = "application/json";
 
             switch (ex)
             {
-                // --- 400: VALIDACIÓN ---
+                // --- 400: VALIDACIÓN ---problem
                 case FluentValidation.ValidationException fvEx:
                     {
                         context.Response.StatusCode = StatusCodes.Status400BadRequest;
 
                         // Agrupamos errores por propiedad
                         var errors = fvEx.Errors
-                                         .GroupBy(e => e.PropertyName)
-                                         .ToDictionary(
-                                             g => g.Key,
-                                             g => g.Select(e => e.ErrorMessage).ToArray());
+                            .GroupBy(e => e.PropertyName)
+                            .SelectMany(e => e.Select(x => x.ErrorMessage));
 
-                        var problem = new ValidationProblemDetails(errors)
+                        await context.Response.WriteAsJsonAsync(new
                         {
-                            Status = StatusCodes.Status400BadRequest,
-                            Title = "Datos de entrada no válidos"
-                        };
-
-                        await context.Response.WriteAsJsonAsync(problem);
+                            success = false,
+                            message = string.Join(",", errors)
+                        });
                         break;
                     }
 
@@ -52,7 +50,8 @@ public class ExceptionHandlingMiddleware(
                         context.Response.StatusCode = StatusCodes.Status409Conflict;
                         await context.Response.WriteAsJsonAsync(new
                         {
-                            error = dupEx.Message
+                            success = true,
+                            message = dupEx.Message
                         });
                         break;
                     }
@@ -64,7 +63,8 @@ public class ExceptionHandlingMiddleware(
                     context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
                     await context.Response.WriteAsJsonAsync(new
                     {
-                        error = "Base de datos no disponible"
+                        success = false,
+                        message = "Base de datos no disponible"
                     });
                     break;
 
@@ -73,7 +73,8 @@ public class ExceptionHandlingMiddleware(
                     context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                     await context.Response.WriteAsJsonAsync(new
                     {
-                        error = "Ocurrió un error inesperado"
+                        success = false,
+                        message = "Ocurrió un error inesperado"
                     });
                     break;
             }
