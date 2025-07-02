@@ -1,0 +1,11 @@
+# Evita mandar basura al contexto (más rápido, menos capas)
+**/bin/
+**/obj/
+**/TestResults/
+.vscode/
+.idea/
+.git/
+*.user
+*.suo
+Dockerfile*
+docker-compose*

@@ -1,0 +1,59 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: api
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - DefaultConnection=${DefaultConnection}
+    depends_on:
+      - db
+    networks:
+      - network
+    profiles:
+      - prod
+
+  api-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: api
+    networks:
+      - network
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - DefaultConnection=${DefaultConnection}
+    depends_on:
+      - db
+    volumes:
+      - .:/src
+    profiles:
+      - dev
+
+  db:
+    build: ./db
+    container_name: db
+    expose:
+      - 3306
+    env_file:
+      - .env
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    networks:
+      - network
+    profiles:
+      - dev
+      - prod
+
+networks:
+  network:
+    driver: bridge

@@ -1,0 +1,14 @@
+ARG BASE_TAG=8.0
+FROM mcr.microsoft.com/dotnet/sdk:${BASE_TAG}
+WORKDIR /src
+
+# Copiamos la solución completa de una sola vez (aquí la caché no es tan crítica)
+COPY . .
+
+RUN dotnet tool install -g dotnet-watch
+ENV PATH="$PATH:/root/.dotnet/tools"
+
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Development
+ENTRYPOINT ["dotnet", "watch", "--project", "MyShop.API/MyShop.API.csproj", "run", "--urls", "http://0.0.0.0:8080"]

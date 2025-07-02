@@ -1,0 +1,29 @@
+# ========= Stage 1: Build =========
+ARG BASE_TAG=8.0
+FROM mcr.microsoft.com/dotnet/sdk:${BASE_TAG} AS build
+WORKDIR /src
+
+# 1️⃣ Copiamos solo archivos de proyecto y la solución (capa caché)
+COPY ["MyShop.sln", "./"]
+COPY ["MyShop.API/MyShop.API.csproj", "MyShop.API/"]
+COPY ["MyShop.Application/MyShop.Application.csproj", "MyShop.Application/"]
+COPY ["MyShop.Domain/MyShop.Domain.csproj", "MyShop.Domain/"]
+COPY ["MyShop.Infrastructure/MyShop.Infrastructure.csproj", "MyShop.Infrastructure/"]
+
+# Restore con la API (trae transitivamente los paquetes de las libs)
+RUN dotnet restore "MyShop.API/MyShop.API.csproj"
+
+# 2️⃣ Copiamos el resto del código
+COPY . .
+
+# 3️⃣ Publicamos solo la API
+RUN dotnet publish "MyShop.API/MyShop.API.csproj" -c Release -o /app/publish
+
+# ========= Stage 2: Runtime =========
+FROM mcr.microsoft.com/dotnet/aspnet:${BASE_TAG} AS runtime
+WORKDIR /app
+COPY --from=build /app/publish .
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
+ENTRYPOINT ["dotnet", "MyShop.API.dll"]
